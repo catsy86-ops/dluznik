@@ -1,0 +1,99 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                     DATABASE QUICK REFERENCE                              ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+PROBLEM: psql command not found
+REASON:  PostgreSQL is not installed locally (running in Docker instead)
+SOLUTION: Use Docker commands or the db.ps1 helper script
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EASIEST WAY - Use Helper Script:
+
+  .\db.ps1 connect       → Connect to database interactively
+  .\db.ps1 users         → View all users
+  .\db.ps1 loans         → View all loans
+  .\db.ps1 obligations   → View all obligations
+  .\db.ps1 transactions  → View all transactions
+  .\db.ps1 count         → Count records in each table
+  .\db.ps1 tables        → List all tables
+  .\db.ps1 reset         → Reset database (DELETE ALL DATA!)
+  .\db.ps1 help          → Show help
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MANUAL DOCKER COMMANDS:
+
+  Connect interactively:
+  docker exec -it postgres-dluznik psql -U postgres -d debt_management_app
+
+  List tables:
+  docker exec -it postgres-dluznik psql -U postgres -d debt_management_app -c "\dt"
+
+  View users:
+  docker exec -it postgres-dluznik psql -U postgres -d debt_management_app -c "SELECT * FROM \"user\";"
+
+  View loans:
+  docker exec -it postgres-dluznik psql -U postgres -d debt_management_app -c "SELECT * FROM loan;"
+
+  View obligations:
+  docker exec -it postgres-dluznik psql -U postgres -d debt_management_app -c "SELECT * FROM obligation;"
+
+  View transactions:
+  docker exec -it postgres-dluznik psql -U postgres -d debt_management_app -c "SELECT * FROM transactions;"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INSIDE INTERACTIVE SHELL (after connecting):
+
+  \dt                    → List all tables
+  \d "user"              → Describe user table
+  \d loan                → Describe loan table
+  \d obligation          → Describe obligation table
+  \d transactions        → Describe transactions table
+  \l                     → List all databases
+  SELECT current_database();  → Show current database
+  SELECT current_user;   → Show current user
+  \q                     → Exit
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RECOMMENDED WORKFLOW:
+
+  1. Use helper script for quick access:
+     .\db.ps1 users
+
+  2. For interactive work:
+     .\db.ps1 connect
+     Then run SQL commands inside
+
+  3. For complex queries:
+     Use Docker commands directly
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TROUBLESHOOTING:
+
+  Container not running?
+  → docker start postgres-dluznik
+
+  Container doesn't exist?
+  → docker run --name postgres-dluznik -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=debt_management_app -p 5432:5432 -d postgres:15
+
+  Want to install psql locally?
+  → Download PostgreSQL from https://www.postgresql.org/download/windows/
+  → Or see DATABASE_ACCESS.md for alternatives
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CREDENTIALS:
+
+  Host:     localhost
+  Port:     5432
+  Username: postgres
+  Password: postgres
+  Database: debt_management_app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For more details, see DATABASE_ACCESS.md

@@ -1,0 +1,13 @@
+{
+  "name": "Dłużnik - Zarządzanie Pożyczkami",
+  "short_name": "Dłużnik",
+  "description": "Zarządzaj pożyczkami i zobowiązaniami",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0d14",
+  "theme_color": "#6366f1",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
