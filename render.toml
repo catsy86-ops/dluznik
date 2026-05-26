@@ -1,0 +1,20 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "./Dockerfile"
+
+[deploy]
+startCommand = "node dist/index.js"
+healthCheckPath = "/health"
+healthCheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Environment variables will be set in Render Dashboard
+# Do NOT commit secrets to this file
+
+# Auto-deploy configuration
+# This is configured in Render Dashboard:
+# - Auto-deploy: ON
+# - Deploy on push: main branch
+# - Redeploy: On every successful build
+
