@@ -7,6 +7,7 @@ import type { User } from './api';
 const GUEST_USER: User = {
   id: 'guest',
   email: 'gość@demo.pl',
+  emailVerified: true,
   notificationsEnabled: false,
   createdAt: new Date().toISOString(),
 };
@@ -15,6 +16,7 @@ interface AuthCtx {
   user: User | null;
   token: string | null;
   isGuest: boolean;
+  emailVerified: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginAsGuest: () => void;
   logout: () => void;
@@ -78,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isGuest, login, loginAsGuest, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, isGuest, emailVerified: isGuest || (user?.emailVerified ?? false), login, loginAsGuest, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

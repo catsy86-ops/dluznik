@@ -26,4 +26,10 @@ export class User {
 
   @Column({ type: 'boolean', default: true })
   notificationsEnabled!: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  emailVerified!: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  emailVerifiedAt!: Date | null;
 }

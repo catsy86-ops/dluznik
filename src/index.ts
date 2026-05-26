@@ -14,6 +14,7 @@ import authRoutes from './routes/authRoutes';
 import loanRoutes from './routes/loanRoutes';
 import obligationRoutes from './routes/obligationRoutes';
 import summaryRoutes from './routes/summaryRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -73,6 +74,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/loans', loanRoutes);
 app.use('/api/obligations', obligationRoutes);
 app.use('/api/summary', summaryRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 /**
  * Serve React frontend in production

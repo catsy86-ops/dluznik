@@ -51,6 +51,11 @@ describe('PaymentService', () => {
         dueDate: null,
         description: null,
         currency: 'PLN',
+        statusChangedAt: null,
+        statusReason: null,
+        interestRate: null,
+        interestType: null,
+        category: null,
         user: undefined as any,
       };
 
@@ -126,6 +131,11 @@ describe('PaymentService', () => {
         dueDate: null,
         description: null,
         currency: 'PLN',
+        statusChangedAt: null,
+        statusReason: null,
+        interestRate: null,
+        interestType: null,
+        category: null,
         user: undefined as any,
       };
 
@@ -155,6 +165,11 @@ describe('PaymentService', () => {
         dueDate: null,
         description: null,
         currency: 'PLN',
+        statusChangedAt: null,
+        statusReason: null,
+        interestRate: null,
+        interestType: null,
+        category: null,
         user: undefined as any,
       };
 
@@ -209,6 +224,11 @@ describe('PaymentService', () => {
         dueDate: null,
         description: null,
         currency: 'PLN',
+        statusChangedAt: null,
+        statusReason: null,
+        interestRate: null,
+        interestType: null,
+        category: null,
         user: undefined as any,
       };
 
@@ -265,6 +285,11 @@ describe('PaymentService', () => {
         dueDate: null,
         description: null,
         currency: 'PLN',
+        statusChangedAt: null,
+        statusReason: null,
+        interestRate: null,
+        interestType: null,
+        category: null,
         user: undefined as any,
       };
 
@@ -320,6 +345,11 @@ describe('PaymentService', () => {
         dueDate: null,
         description: null,
         currency: 'PLN',
+        statusChangedAt: null,
+        statusReason: null,
+        interestRate: null,
+        interestType: null,
+        category: null,
         user: undefined as any,
       };
 
@@ -374,6 +404,11 @@ describe('PaymentService', () => {
         dueDate: null,
         description: null,
         currency: 'PLN',
+        statusChangedAt: null,
+        statusReason: null,
+        interestRate: null,
+        interestType: null,
+        category: null,
         user: undefined as any,
       };
 
@@ -430,6 +465,11 @@ describe('PaymentService', () => {
         dueDate: null,
         description: null,
         currency: 'PLN',
+        statusChangedAt: null,
+        statusReason: null,
+        interestRate: null,
+        interestType: null,
+        category: null,
         user: undefined as any,
       };
 
@@ -493,6 +533,11 @@ describe('PaymentService', () => {
         dueDate: null,
         description: null,
         currency: 'PLN',
+        statusChangedAt: null,
+        statusReason: null,
+        interestRate: null,
+        interestType: null,
+        category: null,
         user: undefined as any,
       };
 

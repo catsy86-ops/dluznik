@@ -13,3 +13,4 @@ export {
   authenticate,
   AuthenticatedRequest,
 } from './authMiddleware';
+export { requireEmailVerified } from './emailVerificationMiddleware';

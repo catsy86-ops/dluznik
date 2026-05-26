@@ -43,6 +43,8 @@ describe('AuthService', () => {
         updatedAt: new Date(),
         lastLoginAt: null,
         notificationsEnabled: true,
+        emailVerified: false,
+        emailVerifiedAt: null,
       };
 
       mockUserRepository.create.mockResolvedValue(mockUser);
@@ -101,6 +103,8 @@ describe('AuthService', () => {
         updatedAt: new Date(),
         lastLoginAt: null,
         notificationsEnabled: true,
+        emailVerified: false,
+        emailVerifiedAt: null,
       };
 
       mockUserRepository.create.mockResolvedValue(mockUser);
@@ -137,6 +141,8 @@ describe('AuthService', () => {
         updatedAt: new Date(),
         lastLoginAt: null,
         notificationsEnabled: true,
+        emailVerified: false,
+        emailVerifiedAt: null,
       };
 
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
@@ -164,6 +170,7 @@ describe('AuthService', () => {
     });
 
     it('should reject login with non-existent email', async () => {
+
       // Arrange
       const email = 'nonexistent@example.com';
       const password = 'ValidPassword123';
@@ -192,6 +199,8 @@ describe('AuthService', () => {
         updatedAt: new Date(),
         lastLoginAt: null,
         notificationsEnabled: true,
+        emailVerified: false,
+        emailVerifiedAt: null,
       };
 
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
@@ -217,6 +226,8 @@ describe('AuthService', () => {
         updatedAt: new Date(),
         lastLoginAt: null,
         notificationsEnabled: true,
+        emailVerified: false,
+        emailVerifiedAt: null,
       };
 
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
@@ -255,6 +266,8 @@ describe('AuthService', () => {
         updatedAt: new Date(),
         lastLoginAt: null,
         notificationsEnabled: true,
+        emailVerified: false,
+        emailVerifiedAt: null,
       };
 
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);

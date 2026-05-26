@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { authApi } from '../api';
+import EmailInput from '../components/EmailInput';
+import PasswordInput from '../components/PasswordInput';
+import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
+import { usePasswordValidation } from '../hooks/usePasswordValidation';
+import { formatAuthError } from '../utils/errorMessages';
 
 export default function LoginPage() {
   const { login, loginAsGuest } = useAuth();
@@ -11,30 +16,84 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('rememberMe') === 'true';
+  });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  
+  // Password validation for registration
+  const passwordValidation = usePasswordValidation(password);
+
+  // Auto-focus email field on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      emailInputRef.current?.focus();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [tab]);
+
+  // Persist remember me preference
+  useEffect(() => {
+    localStorage.setItem('rememberMe', rememberMe.toString());
+  }, [rememberMe]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
-    setError(''); setLoading(true);
+    setError('');
+    
+    // Validation
+    if (!email.trim() || !password.trim()) {
+      setError('Wszystkie pola są wymagane');
+      return;
+    }
+    
+    setLoading(true);
     try {
       await login(email, password);
       navigate('/');
-    } catch (err: any) { setError(err.message); }
-    finally { setLoading(false); }
+    } catch (err: any) {
+      setError(formatAuthError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
-    setError(''); setSuccess(''); setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    // Validation
+    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
+      setError('Wszystkie pola są wymagane');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setError('Hasła nie są identyczne');
+      return;
+    }
+    
+    if (!passwordValidation.isValid) {
+      setError('Hasło musi spełniać wszystkie wymagania bezpieczeństwa');
+      return;
+    }
+    
+    setLoading(true);
     try {
       await authApi.register(email, password, confirmPassword);
-      setSuccess('Konto utworzone! Możesz się teraz zalogować.');
+      setSuccess('Konto utworzone! Sprawdź swoją skrzynkę email, aby zweryfikować adres.');
       setTab('login');
-      setPassword(''); setConfirmPassword('');
-    } catch (err: any) { setError(err.message); }
-    finally { setLoading(false); }
+      setPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setError(formatAuthError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGuestLogin = () => {
@@ -82,38 +141,186 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {error && <div className="error-msg" style={{ marginBottom: '16px' }}>⚠️ {error}</div>}
-          {success && <div className="success-msg" style={{ marginBottom: '16px' }}>✓ {success}</div>}
+          {error && (
+            <div
+              className="error-msg"
+              style={{
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+                padding: '12px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+              }}
+            >
+              <span style={{ fontSize: '16px' }}>⚠️</span>
+              <span style={{ flex: 1, fontSize: '14px', lineHeight: '1.5' }}>{error}</span>
+            </div>
+          )}
+          {success && (
+            <div
+              className="success-msg"
+              style={{
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+                padding: '12px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+              }}
+            >
+              <span style={{ fontSize: '16px' }}>✓</span>
+              <span style={{ flex: 1, fontSize: '14px', lineHeight: '1.5' }}>{success}</span>
+            </div>
+          )}
 
           {tab === 'login' ? (
-            <form onSubmit={handleLogin}>
-              <div className="form-group">
-                <label>Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.com" required autoFocus />
+            <form onSubmit={handleLogin} autoComplete="on">
+              <EmailInput
+                ref={emailInputRef}
+                label="Email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                }}
+                onEmailChange={(newEmail) => setEmail(newEmail)}
+                placeholder="twoj@email.com"
+                required
+                autoComplete="email"
+              />
+              <PasswordInput
+                label="Hasło"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError('');
+                }}
+                placeholder="••••••••"
+                required
+                autoComplete="current-password"
+              />
+              
+              {/* Remember Me Checkbox */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '12px',
+                  marginBottom: '4px',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer',
+                    accentColor: 'var(--primary)',
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') {
+                      e.preventDefault();
+                      setRememberMe(!rememberMe);
+                    }
+                  }}
+                />
+                <label
+                  htmlFor="rememberMe"
+                  style={{
+                    fontSize: '14px',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                >
+                  Zapamiętaj mnie
+                </label>
               </div>
-              <div className="form-group">
-                <label>Hasło</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
-              </div>
-              <button type="submit" className="btn-primary" style={{ width: '100%', padding: '13px', marginTop: '8px', fontSize: '15px' }} disabled={loading}>
+              
+              <button
+                type="submit"
+                className="btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '13px',
+                  marginTop: '8px',
+                  fontSize: '15px',
+                }}
+                disabled={loading}
+              >
                 {loading ? <span className="spinner" /> : 'Zaloguj się →'}
               </button>
             </form>
           ) : (
-            <form onSubmit={handleRegister}>
-              <div className="form-group">
-                <label>Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.com" required autoFocus />
-              </div>
-              <div className="form-group">
-                <label>Hasło (min. 8 znaków)</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required minLength={8} />
-              </div>
-              <div className="form-group">
-                <label>Potwierdź hasło</label>
-                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" required />
-              </div>
-              <button type="submit" className="btn-primary" style={{ width: '100%', padding: '13px', marginTop: '8px', fontSize: '15px' }} disabled={loading}>
+            <form onSubmit={handleRegister} autoComplete="on">
+              <EmailInput
+                ref={emailInputRef}
+                label="Email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                }}
+                onEmailChange={(newEmail) => setEmail(newEmail)}
+                placeholder="twoj@email.com"
+                required
+                autoComplete="email"
+              />
+              <PasswordInput
+                label="Hasło"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError('');
+                }}
+                placeholder="••••••••"
+                required
+                autoComplete="new-password"
+                maxLength={128}
+              />
+              
+              {/* Password Strength Indicator */}
+              {password && (
+                <PasswordStrengthIndicator
+                  strength={passwordValidation.strength}
+                  requirements={passwordValidation.requirements}
+                  score={passwordValidation.score}
+                />
+              )}
+              
+              <PasswordInput
+                label="Potwierdź hasło"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setError('');
+                }}
+                placeholder="••••••••"
+                required
+                autoComplete="new-password"
+                maxLength={128}
+              />
+              
+              <button
+                type="submit"
+                className="btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '13px',
+                  marginTop: '16px',
+                  fontSize: '15px',
+                }}
+                disabled={loading || !passwordValidation.isValid}
+              >
                 {loading ? <span className="spinner" /> : 'Utwórz konto →'}
               </button>
             </form>

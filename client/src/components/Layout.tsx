@@ -1,35 +1,35 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import ThemeToggle from './ThemeToggle';
-import { useEffect, useState } from 'react';
-import { summaryApi } from '../api';
-import type { Notification } from '../api';
+import { useState } from 'react';
+import { useNotificationPolling } from '../hooks/useNotificationPolling';
+import type { NotificationItem } from '../types/dashboard-ux';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '📊', activeIcon: '📊' },
-  { to: '/loans', label: 'Pożyczki', icon: '💸', activeIcon: '💸' },
-  { to: '/obligations', label: 'Zobowiązania', icon: '📋', activeIcon: '📋' },
-  { to: '/settings', label: 'Ustawienia', icon: '⚙️', activeIcon: '⚙️' },
-  { to: '/profile', label: 'Profil', icon: '👤', activeIcon: '👤' },
+  { to: '/', label: 'Dashboard', icon: '📊' },
+  { to: '/loans', label: 'Pożyczki', icon: '💸' },
+  { to: '/obligations', label: 'Zobowiązania', icon: '📋' },
+  { to: '/profile', label: 'Profil', icon: '👤' },
 ];
 
 export default function Layout() {
   const { user, isGuest } = useAuth();
   const location = useLocation();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const navigate = useNavigate();
   const [showNotif, setShowNotif] = useState(false);
 
-  useEffect(() => {
-    summaryApi.get().then(s => setNotifications(s.notifications)).catch(() => {});
-  }, [location.pathname]);
+  const { notifications, count } = useNotificationPolling({
+    baseInterval: 60000,
+    maxInterval: 300000,
+    maxRetries: 5,
+    onAuthError: () => navigate('/login'),
+  });
 
   const pageTitle = navItems.find(n =>
     n.to === '/' ? location.pathname === '/' : location.pathname.startsWith(n.to)
   )?.label ?? 'Dłużnik';
 
-  const overdueCount = notifications.filter(n => n.type.startsWith('overdue')).length;
-  const upcomingCount = notifications.filter(n => n.type.startsWith('upcoming')).length;
-  const totalAlerts = overdueCount + upcomingCount;
+  const badgeDisplay = count > 9 ? '9+' : count;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -74,7 +74,7 @@ export default function Layout() {
               }}
             >
               🔔
-              {totalAlerts > 0 && <span className="notif-dot">{totalAlerts > 9 ? '9+' : totalAlerts}</span>}
+              {count > 0 && <span className="notif-dot">{badgeDisplay}</span>}
             </button>
 
             {showNotif && (
@@ -87,7 +87,7 @@ export default function Layout() {
               }}>
                 <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontWeight: '800', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   🔔 Powiadomienia
-                  {totalAlerts > 0 && <span style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '700' }}>{totalAlerts}</span>}
+                  {count > 0 && <span style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '700' }}>{count}</span>}
                 </div>
                 <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
                   {notifications.length === 0 ? (
@@ -96,7 +96,7 @@ export default function Layout() {
                       Brak alertów — wszystko w porządku!
                     </div>
                   ) : notifications.map((n, i) => (
-                    <NotifItem key={i} notif={n} onClose={() => setShowNotif(false)} />
+                    <NotifItem key={i} notif={n} />
                   ))}
                 </div>
               </div>
@@ -179,16 +179,12 @@ export default function Layout() {
   );
 }
 
-function NotifItem({ notif, onClose }: { notif: Notification; onClose: () => void }) {
+function NotifItem({ notif }: { notif: NotificationItem }) {
   const isOverdue = notif.type.startsWith('overdue');
-  const isLoan = notif.type.includes('loan');
-  const fmt = (n: number) => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: notif.currency }).format(n);
 
   return (
-    <NavLink
-      to={isLoan ? `/loans` : `/obligations`}
-      onClick={onClose}
-      style={{ display: 'flex', gap: '12px', padding: '14px 18px', borderBottom: '1px solid var(--border)', textDecoration: 'none', transition: 'background 0.15s' }}
+    <div
+      style={{ display: 'flex', gap: '12px', padding: '14px 18px', borderBottom: '1px solid var(--border)', transition: 'background 0.15s' }}
     >
       <div style={{
         width: 36, height: 36, borderRadius: '10px', flexShrink: 0,
@@ -201,11 +197,11 @@ function NotifItem({ notif, onClose }: { notif: Notification; onClose: () => voi
         <div style={{ fontSize: '13px', fontWeight: '700', color: isOverdue ? 'var(--danger)' : 'var(--warning)' }}>
           {isOverdue ? 'Przeterminowane' : 'Zbliża się termin'}
         </div>
-        <div style={{ fontSize: '13px', color: 'var(--text)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notif.name}</div>
+        <div style={{ fontSize: '13px', color: 'var(--text)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notif.message}</div>
         <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-          {fmt(notif.amount)} · {new Date(notif.dueDate).toLocaleDateString('pl-PL')}
+          {new Date(notif.createdAt).toLocaleDateString('pl-PL')}
         </div>
       </div>
-    </NavLink>
+    </div>
   );
 }

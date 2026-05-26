@@ -5,9 +5,13 @@ import { Loan } from '../models/Loan';
 import { Obligation } from '../models/Obligation';
 import { Transaction } from '../models/Transaction';
 import { PaymentRule } from '../models/PaymentRule';
+import { EmailVerificationToken } from '../models/EmailVerificationToken';
+import { ResendRateLimit } from '../models/ResendRateLimit';
 import { CreateUserTable1704000000000 } from '../migrations/1704000000000-CreateUserTable';
 import { CreateLoanTable1704000000001 } from '../migrations/1704000000001-CreateLoanTable';
 import { CreatePaymentRuleTable1704000000100 } from '../migrations/1704000000100-CreatePaymentRuleTable';
+import { CreateEmailVerificationTables1704000000200 } from '../migrations/1704000000200-CreateEmailVerificationTables';
+import { AddEmailVerifiedToUser1704000000201 } from '../migrations/1704000000201-AddEmailVerifiedToUser';
 
 dotenv.config();
 
@@ -64,8 +68,8 @@ export const AppDataSource = new DataSource({
   synchronize: databaseConfig.synchronize,
   logging: databaseConfig.logging,
   ssl: databaseConfig.ssl ? { rejectUnauthorized: false } : false,
-  entities: [User, Loan, Obligation, Transaction, PaymentRule],
-  migrations: [CreateUserTable1704000000000, CreateLoanTable1704000000001, CreatePaymentRuleTable1704000000100],
+  entities: [User, Loan, Obligation, Transaction, PaymentRule, EmailVerificationToken, ResendRateLimit],
+  migrations: [CreateUserTable1704000000000, CreateLoanTable1704000000001, CreatePaymentRuleTable1704000000100, CreateEmailVerificationTables1704000000200, AddEmailVerifiedToUser1704000000201],
   subscribers: [],
   migrationsRun: false,
 });

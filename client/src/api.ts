@@ -52,6 +52,8 @@ export const authApi = {
   me: () => request<User>('/auth/me'),
   updateProfile: (data: { notificationsEnabled?: boolean; currentPassword?: string; newPassword?: string }) =>
     request<User>('/auth/me', { method: 'PATCH', body: JSON.stringify(data) }),
+  resendVerification: () =>
+    request<ResendVerificationResponse>('/auth/resend-verification', { method: 'POST' }),
 };
 
 // Loans
@@ -267,8 +269,15 @@ export const paymentRulesApi = {
 export interface User {
   id: string;
   email: string;
+  emailVerified: boolean;
   notificationsEnabled: boolean;
   createdAt: string;
+}
+
+export interface ResendVerificationResponse {
+  success: boolean;
+  message?: string;
+  retryAfter?: number;
 }
 
 export interface Loan {

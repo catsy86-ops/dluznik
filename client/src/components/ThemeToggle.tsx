@@ -1,19 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useTheme } from '../hooks/useTheme';
 
 export default function ThemeToggle() {
-  const [dark, setDark] = useState(() => {
-    return localStorage.getItem('theme') !== 'light';
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    localStorage.setItem('theme', dark ? 'dark' : 'light');
-  }, [dark]);
+  const { isDark, toggle } = useTheme();
 
   return (
     <button
-      onClick={() => setDark(d => !d)}
-      title={dark ? 'Tryb jasny' : 'Tryb ciemny'}
+      onClick={toggle}
+      title={isDark ? 'Tryb jasny' : 'Tryb ciemny'}
       style={{
         background: 'var(--bg3)',
         border: '1px solid var(--border)',
@@ -25,7 +18,7 @@ export default function ThemeToggle() {
         transition: 'all 0.2s',
       }}
     >
-      {dark ? '☀️' : '🌙'}
+      {isDark ? '☀️' : '🌙'}
     </button>
   );
 }

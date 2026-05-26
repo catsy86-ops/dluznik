@@ -8,6 +8,7 @@ export { default as LoanComparisonComponent } from './LoanComparisonComponent';
 export { default as PaymentRulesComponent } from './PaymentRulesComponent';
 
 // UI Enhancement components
+export { default as DashboardEmptyState } from './DashboardEmptyState';
 export { default as SkeletonLoader } from './SkeletonLoader';
 export { default as StatCard } from './StatCard';
 export { default as EnhancedCard } from './EnhancedCard';
@@ -18,6 +19,11 @@ export { default as FilterPanel } from './FilterPanel';
 export { default as GuestBanner } from './GuestBanner';
 export type { LoanFilters } from './FilterPanel';
 export { DEFAULT_FILTERS } from './FilterPanel';
+
+// Auth UX components
+export { default as EmailInput } from './EmailInput';
+export { default as PasswordInput } from './PasswordInput';
+export { default as PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 
 // Existing components
 export { default as Confetti } from './Confetti';

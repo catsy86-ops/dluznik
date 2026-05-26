@@ -29,6 +29,10 @@ describe('errorHandler', () => {
     mockReq = {
       path: '/api/test',
       method: 'GET',
+      headers: {
+        'user-agent': 'jest-test',
+      },
+      ip: '127.0.0.1',
     };
     mockRes = {
       status: jest.fn().mockReturnThis(),

@@ -15,6 +15,7 @@ import { GUEST_LOANS, GUEST_TRANSACTIONS } from '../guestData';
 import { useSwipeDelete } from '../hooks/useSwipeDelete';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { useDebounce } from '../hooks/useDebounce';
+import { RecentlyViewedService } from '../services/RecentlyViewedService';
 
 function fmt(n: number, currency = 'PLN') {
   return new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(n);
@@ -56,7 +57,7 @@ export default function LoansPage() {
   const [filters, setFilters] = useState<LoanFilters>(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
   const { toast } = useToast();
-  const { isGuest } = useAuth();
+  const { isGuest, user } = useAuth();
   const { checkGuest } = useGuestGuard();
   const debouncedSearch = useDebounce(filters.search, 300);
 
@@ -88,6 +89,10 @@ export default function LoansPage() {
       await loansApi.delete(loan.id);
       toast('Pożyczka usunięta', 'success');
       setLoans(prev => prev.filter(l => l.id !== loan.id));
+      // Remove from recently viewed list
+      if (user?.id) {
+        RecentlyViewedService.removeItem(user.id, loan.id);
+      }
     } catch (e: any) { toast(e.message, 'error'); }
     finally { setRemovingId(null); }
   };

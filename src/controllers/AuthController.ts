@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { authService } from '../services/AuthService';
+import { emailVerificationService } from '../services/EmailVerificationService';
 import { userRepository } from '../repositories/UserRepository';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError, asyncHandler } from '../middleware/errorHandler';
@@ -58,14 +59,38 @@ export class AuthController {
       );
     }
 
+    // Check if email already exists - return generic message to prevent enumeration
+    // Requirement 2.7: no email enumeration
+    const existingUser = await userRepository.findByEmail(email);
+    if (existingUser) {
+      // Return same success response as new registration to prevent enumeration
+      res.status(200).json(
+        ApiResponse.success(
+          200,
+          'Jeśli podany adres email jest prawidłowy, wysłaliśmy link weryfikacyjny. Sprawdź swoją skrzynkę.',
+          null
+        )
+      );
+      return;
+    }
+
     // Register user
     const user = await authService.register(email, password);
 
-    res.status(201).json(
+    // Trigger verification email on signup (Requirement 2.1)
+    try {
+      await emailVerificationService.sendVerificationEmail(user.id as string, email);
+    } catch (emailError) {
+      // Log error but don't fail registration - user can resend later
+      console.error('[Registration] Failed to send verification email:', emailError);
+    }
+
+    // Return generic message (same as duplicate case to prevent enumeration)
+    res.status(200).json(
       ApiResponse.success(
-        201,
-        'Użytkownik zarejestrowany pomyślnie',
-        user
+        200,
+        'Jeśli podany adres email jest prawidłowy, wysłaliśmy link weryfikacyjny. Sprawdź swoją skrzynkę.',
+        { id: user.id, email: user.email }
       )
     );
   });

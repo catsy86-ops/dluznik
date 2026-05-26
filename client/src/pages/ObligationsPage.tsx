@@ -1,30 +1,22 @@
 import { useEffect, useState, useCallback } from 'react';
-import type { FormEvent } from 'react';import { obligationsApi } from '../api';
+import type { FormEvent } from 'react';
+import { obligationsApi } from '../api';
 import type { Obligation, Transaction } from '../api';
 import { useToast } from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import Confetti from '../components/Confetti';
+import { AnimatedNumber, AnimatedStatus } from '../components';
+import FilterPanel, { type LoanFilters, DEFAULT_FILTERS } from '../components/FilterPanel';
+import GuestBanner from '../components/GuestBanner';
+import { useAuth } from '../AuthContext';
+import { useGuestGuard } from '../hooks/useGuestGuard';
 import { useSwipeDelete } from '../hooks/useSwipeDelete';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { useDebounce } from '../hooks/useDebounce';
+import { RecentlyViewedService } from '../services/RecentlyViewedService';
 
 function fmt(n: number, currency = 'PLN') {
   return new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(n);
-}
-
-function useCountUp(target: number, duration = 600) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    let start = 0;
-    const step = target / (duration / 16);
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= target) { setVal(target); clearInterval(timer); }
-      else setVal(Math.floor(start));
-    }, 16);
-    return () => clearInterval(timer);
-  }, [target, duration]);
-  return val;
 }
 
 function ProgressBar({ value, max }: { value: number; max: number }) {
@@ -44,28 +36,34 @@ export default function ObligationsPage() {
   const [showPayments, setShowPayments] = useState<Obligation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Obligation | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'active' | 'paid'>('all');
   const [showConfetti, setShowConfetti] = useState(false);
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<'date' | 'amount' | 'name'>('date');
+  const [filters, setFilters] = useState<LoanFilters>(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
   const { toast } = useToast();
-  const debouncedSearch = useDebounce(search, 300);
+  const { isGuest, user } = useAuth();
+  const { checkGuest } = useGuestGuard();
+  const debouncedSearch = useDebounce(filters.search, 300);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await obligationsApi.list({ limit: '100' });
-      setObligations((r as any).obligations ?? []);
+      if (isGuest) {
+        await new Promise(r => setTimeout(r, 300));
+        setObligations([]);
+      } else {
+        const r = await obligationsApi.list({ limit: '100' });
+        setObligations((r as any).obligations ?? []);
+      }
     } catch (e: any) { toast(e.message, 'error'); }
     finally { setLoading(false); }
-  }, []);
+  }, [isGuest]);
 
   useEffect(() => { load(); }, [load]);
 
   const { containerRef, pullY, refreshing } = usePullToRefresh(load);
 
   const handleDelete = async (ob: Obligation) => {
+    if (checkGuest('Nie możesz usuwać zobowiązań w trybie gościa')) return;
     setDeleteTarget(null);
     setRemovingId(ob.id);
     await new Promise(r => setTimeout(r, 350));
@@ -73,17 +71,34 @@ export default function ObligationsPage() {
       await obligationsApi.delete(ob.id);
       toast('Zobowiązanie usunięte', 'success');
       setObligations(prev => prev.filter(o => o.id !== ob.id));
+      // Remove from recently viewed list
+      if (user?.id) {
+        RecentlyViewedService.removeItem(user.id, ob.id);
+      }
     } catch (e: any) { toast(e.message, 'error'); }
     finally { setRemovingId(null); }
   };
 
   const filtered = obligations
-    .filter(o => filter === 'all' ? true : o.status === filter)
+    .filter(o => {
+      if (filters.status === 'overdue') return o.status === 'active' && o.dueDate && new Date(o.dueDate) < new Date();
+      return filters.status === 'all' ? true : o.status === filters.status;
+    })
     .filter(o => !debouncedSearch || o.creditorName.toLowerCase().includes(debouncedSearch.toLowerCase()))
+    .filter(o => !filters.currency || filters.currency === 'all' || o.currency === filters.currency)
+    .filter(o => !filters.amountMin || Number(o.currentBalance) >= Number(filters.amountMin))
+    .filter(o => !filters.amountMax || Number(o.currentBalance) <= Number(filters.amountMax))
+    .filter(o => !filters.dateFrom || new Date(o.createdAt) >= new Date(filters.dateFrom))
+    .filter(o => !filters.dateTo || new Date(o.createdAt) <= new Date(filters.dateTo + 'T23:59:59'))
     .sort((a, b) => {
-      if (sort === 'amount') return Number(b.currentBalance) - Number(a.currentBalance);
-      if (sort === 'name') return a.creditorName.localeCompare(b.creditorName);
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      switch (filters.sort) {
+        case 'amount_desc': return Number(b.currentBalance) - Number(a.currentBalance);
+        case 'amount_asc': return Number(a.currentBalance) - Number(b.currentBalance);
+        case 'name_asc': return a.creditorName.localeCompare(b.creditorName);
+        case 'name_desc': return b.creditorName.localeCompare(a.creditorName);
+        case 'date_asc': return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        default: return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
     });
 
   const PAGE_SIZE = 10;
@@ -91,10 +106,11 @@ export default function ObligationsPage() {
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const totalBalance = obligations.reduce((s, o) => s + Number(o.currentBalance), 0);
   const activeCount = obligations.filter(o => o.status === 'active').length;
-  const animatedTotal = useCountUp(Math.round(totalBalance));
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
+      <GuestBanner />
+
       {(pullY > 0 || refreshing) && (
         <div className="pull-indicator" style={{ height: pullY, marginBottom: pullY > 0 ? '8px' : 0 }}>
           {refreshing
@@ -106,45 +122,29 @@ export default function ObligationsPage() {
 
       <div className="page-header">
         <div>
-          <h1>Zobowiązania</h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
-            {activeCount} aktywnych · <span className="count-animate">{fmt(animatedTotal)}</span> łącznie
+          <h1 style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-1px', marginBottom: '6px' }}>
+            📋 Moje Zobowiązania
+          </h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '0' }}>
+            {activeCount} aktywnych · <AnimatedNumber value={totalBalance} format="currency" currency="PLN" /> łącznie
           </p>
         </div>
-        <button className="btn-primary" onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span> Nowe
+        <button
+          className="btn-primary"
+          onClick={() => { if (!checkGuest('Nie możesz dodawać zobowiązań w trybie gościa')) setShowCreate(true); }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span> {isGuest ? '🔒 Nowe' : 'Nowe'}
         </button>
       </div>
 
-      {/* Search + Sort */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-        <input
-          placeholder="🔍 Szukaj po nazwie..."
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1); }}
-          style={{ flex: 1 }}
-        />
-        <select value={sort} onChange={e => setSort(e.target.value as any)} style={{ width: 'auto', flexShrink: 0 }}>
-          <option value="date">Data ↓</option>
-          <option value="amount">Kwota ↓</option>
-          <option value="name">Nazwa A-Z</option>
-        </select>
-      </div>
-
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', background: 'var(--bg3)', padding: '4px', borderRadius: '10px' }}>
-        {(['all', 'active', 'paid'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
-            flex: 1, padding: '7px', borderRadius: '7px', fontSize: '13px', fontWeight: '600',
-            background: filter === f ? 'var(--bg2)' : 'transparent',
-            color: filter === f ? 'var(--text)' : 'var(--text-muted)',
-            border: filter === f ? '1px solid var(--border)' : '1px solid transparent',
-            boxShadow: filter === f ? 'var(--shadow-sm)' : 'none',
-            transition: 'all 0.2s',
-          }}>
-            {f === 'all' ? `Wszystkie (${obligations.length})` : f === 'active' ? `Aktywne (${activeCount})` : `Spłacone (${obligations.filter(o => o.status === 'paid').length})`}
-          </button>
-        ))}
-      </div>
+      <FilterPanel
+        filters={filters}
+        onChange={f => { setFilters(f); setPage(1); }}
+        onReset={() => { setFilters(DEFAULT_FILTERS); setPage(1); }}
+        totalCount={obligations.length}
+        filteredCount={filtered.length}
+      />
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -160,12 +160,14 @@ export default function ObligationsPage() {
         <div style={{ textAlign: 'center', padding: '48px 20px', background: 'var(--bg2)', border: '2px dashed var(--border2)', borderRadius: '16px' }}>
           <div style={{ fontSize: '52px', marginBottom: '12px', opacity: 0.7 }}>📋</div>
           <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '6px' }}>
-            {filter === 'all' ? 'Brak zobowiązań' : filter === 'active' ? 'Brak aktywnych' : 'Brak spłaconych'}
+            {filters.status === 'all' && !filters.search ? 'Brak zobowiązań' : 'Brak wyników'}
           </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: filter === 'all' ? '20px' : 0 }}>
-            {filter === 'all' ? 'Dodaj pierwsze zobowiązanie klikając przycisk poniżej' : 'Zmień filtr aby zobaczyć inne zobowiązania'}
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: filters.status === 'all' && !filters.search ? '20px' : 0 }}>
+            {filters.status === 'all' && !filters.search
+              ? 'Dodaj pierwsze zobowiązanie klikając przycisk poniżej'
+              : 'Spróbuj zmienić filtry lub wyszukiwanie'}
           </p>
-          {filter === 'all' && (
+          {filters.status === 'all' && !filters.search && (
             <button className="btn-primary" onClick={() => setShowCreate(true)} style={{ padding: '10px 24px' }}>
               + Dodaj zobowiązanie
             </button>
@@ -179,7 +181,7 @@ export default function ObligationsPage() {
               obligation={ob}
               delay={i * 40}
               removing={removingId === ob.id}
-              onEdit={() => setSelected(ob)}
+              onEdit={() => { if (!checkGuest('Nie możesz edytować zobowiązań w trybie gościa')) setSelected(ob); }}
               onPayments={() => setShowPayments(ob)}
               onDelete={() => setDeleteTarget(ob)}
             />
@@ -214,15 +216,15 @@ function SwipableObligationCard({ obligation, delay, removing, onEdit, onPayment
   obligation: Obligation; delay: number; removing: boolean;
   onEdit: () => void; onPayments: () => void; onDelete: () => void;
 }) {
-  const { onTouchStart, onTouchMove, onTouchEnd, style: swipeStyle, offset } = useSwipeDelete(onDelete);
+  const { isGuest } = useAuth();
+  const { checkGuest } = useGuestGuard();
+  const { onTouchStart, onTouchMove, onTouchEnd, style: swipeStyle, offset } = useSwipeDelete(
+    () => { if (!checkGuest('Nie możesz usuwać zobowiązań w trybie gościa')) onDelete(); }
+  );
   const isOverdue = obligation.status === 'active' && obligation.dueDate && new Date(obligation.dueDate) < new Date();
-  const pct = obligation.originalAmount > 0 ? ((Number(obligation.originalAmount) - Number(obligation.currentBalance)) / Number(obligation.originalAmount)) * 100 : 0;
-  const statusMap: Record<string, [string, string]> = {
-    active: ['var(--warning)', 'Aktywne'],
-    paid: ['var(--success)', 'Spłacone'],
-    overdue: ['var(--danger)', 'Przeterminowane'],
-  };
-  const [statusColor, statusLabel] = statusMap[obligation.status] ?? ['var(--text-muted)', obligation.status];
+  const pct = obligation.originalAmount > 0
+    ? ((Number(obligation.originalAmount) - Number(obligation.currentBalance)) / Number(obligation.originalAmount)) * 100
+    : 0;
 
   return (
     <div className={removing ? 'card-removing' : ''} style={{ marginBottom: '10px' }}>
@@ -230,12 +232,9 @@ function SwipableObligationCard({ obligation, delay, removing, onEdit, onPayment
         <div className="swipe-delete-bg" style={{ opacity: Math.min(1, Math.abs(offset) / 80) }}>🗑️ Usuń</div>
         <div
           className="card animate-in"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
+          onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
           style={{
-            padding: '16px', marginBottom: 0,
-            animationDelay: `${delay}ms`,
+            padding: '16px', marginBottom: 0, animationDelay: `${delay}ms`,
             borderColor: isOverdue ? 'rgba(239,68,68,0.4)' : undefined,
             background: isOverdue ? 'rgba(239,68,68,0.04)' : undefined,
             ...swipeStyle,
@@ -252,7 +251,9 @@ function SwipableObligationCard({ obligation, delay, removing, onEdit, onPayment
                 {obligation.creditorName}
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                {obligation.dueDate && !isOverdue ? `Termin: ${new Date(obligation.dueDate).toLocaleDateString('pl-PL')}` : `Dodano: ${new Date(obligation.createdAt).toLocaleDateString('pl-PL')}`}
+                {obligation.dueDate && !isOverdue
+                  ? `Termin: ${new Date(obligation.dueDate).toLocaleDateString('pl-PL')}`
+                  : `Dodano: ${new Date(obligation.createdAt).toLocaleDateString('pl-PL')}`}
               </div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '12px' }}>
@@ -264,14 +265,22 @@ function SwipableObligationCard({ obligation, delay, removing, onEdit, onPayment
           </div>
           <ProgressBar value={Number(obligation.currentBalance)} max={Number(obligation.originalAmount)} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-            <span style={{ fontSize: '11px', color: statusColor, fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor, display: 'inline-block' }} />
-              {statusLabel} · {pct.toFixed(0)}% spłacone
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <AnimatedStatus status={isOverdue ? 'overdue' : (obligation.status as 'active' | 'paid')} size="sm" />
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>· {pct.toFixed(0)}% spłacone</span>
+            </div>
             <div style={{ display: 'flex', gap: '6px' }}>
-              <button onClick={onPayments} style={{ padding: '5px 10px', fontSize: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-muted)', cursor: 'pointer' }}>Historia</button>
-              <button onClick={onEdit} style={{ padding: '5px 10px', fontSize: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-muted)', cursor: 'pointer' }}>Edytuj</button>
-              <button onClick={onDelete} style={{ padding: '5px 10px', fontSize: '12px', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', color: 'var(--danger)', cursor: 'pointer' }}>Usuń</button>
+              <button onClick={onPayments} style={{ padding: '5px 10px', fontSize: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }}>
+                Historia
+              </button>
+              <button onClick={onEdit} style={{ padding: '5px 10px', fontSize: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }}>
+                {isGuest ? '🔒' : ''} Edytuj
+              </button>
+              {!isGuest && (
+                <button onClick={onDelete} style={{ padding: '5px 10px', fontSize: '12px', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', color: 'var(--danger)', cursor: 'pointer', transition: 'all 0.2s' }}>
+                  Usuń
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -351,6 +360,7 @@ function PaymentsModal({ obligation, onClose, onFullyPaid }: { obligation: Oblig
   const [txLoading, setTxLoading] = useState(true);
   const [current, setCurrent] = useState(obligation);
   const { toast } = useToast();
+  const { isGuest } = useAuth();
 
   const loadTx = async () => {
     setTxLoading(true);
@@ -364,7 +374,9 @@ function PaymentsModal({ obligation, onClose, onFullyPaid }: { obligation: Oblig
   useEffect(() => { loadTx(); }, []);
 
   const addPayment = async (e: FormEvent) => {
-    e.preventDefault(); setError(''); setLoading(true);
+    e.preventDefault();
+    if (isGuest) { toast('🔒 Tryb gościa: Nie możesz rejestrować spłat', 'info'); return; }
+    setError(''); setLoading(true);
     try {
       await obligationsApi.addPayment(obligation.id, Number(amount), note || undefined);
       const wasFullyPaid = Number(current.currentBalance) - Number(amount) <= 0;
@@ -376,7 +388,9 @@ function PaymentsModal({ obligation, onClose, onFullyPaid }: { obligation: Oblig
     finally { setLoading(false); }
   };
 
-  const pct = current.originalAmount > 0 ? ((Number(current.originalAmount) - Number(current.currentBalance)) / Number(current.originalAmount)) * 100 : 0;
+  const pct = current.originalAmount > 0
+    ? ((Number(current.originalAmount) - Number(current.currentBalance)) / Number(current.originalAmount)) * 100
+    : 0;
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
