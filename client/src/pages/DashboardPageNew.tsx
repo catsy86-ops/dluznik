@@ -208,15 +208,6 @@ export default function DashboardPageNew() {
     return (
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
         <GuestBanner />
-        <div style={{ marginBottom: '30px' }}>
-          <h1 style={{
-            fontSize: '32px', fontWeight: '900', letterSpacing: '-1px', marginBottom: '8px',
-            background: 'var(--gradient-text)', backgroundClip: 'text',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>
-            {'\uD83D\uDCCA'} Przegl\u0105d Finansowy
-          </h1>
-        </div>
         <DashboardEmptyState
           onNavigateLoans={() => navigate('/loans')}
           onNavigateObligations={() => navigate('/obligations')}
@@ -292,10 +283,10 @@ export default function DashboardPageNew() {
           background: 'var(--gradient-text)', backgroundClip: 'text',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         }}>
-          {'\uD83D\uDCCA'} Przegl\u0105d Finansowy
+          📊 Przegląd Finansowy
         </h1>
         <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
-          Pe\u0142ny przegl\u0105d Twojej sytuacji finansowej
+          Pełny przegląd Twojej sytuacji finansowej
         </p>
       </div>
 
@@ -308,21 +299,21 @@ export default function DashboardPageNew() {
                 fontSize: '14px', fontWeight: '700', color: 'var(--text-muted)',
                 textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px',
               }}>
-                {'\uD83D\uDCB1'} {group.currency}
+                💱 {group.currency}
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
                 <EnhancedCard premium>
-                  <StatCard icon={'\uD83D\uDCB0'} label="Saldo Netto"
+                  <StatCard icon='💰' label="Saldo Netto"
                     value={formatCurrency(group.netBalance, group.currency)}
                     color={group.netBalance >= 0 ? 'var(--success)' : 'var(--danger)'} />
                 </EnhancedCard>
                 <EnhancedCard premium>
-                  <StatCard icon={'\uD83D\uDCB8'} label="Po\u017Cyczki"
+                  <StatCard icon='💸' label="Pożyczki"
                     value={formatCurrency(group.totalLoanBalance, group.currency)}
                     color="var(--primary)" />
                 </EnhancedCard>
                 <EnhancedCard premium>
-                  <StatCard icon={'\uD83D\uDCCB'} label="Zobowi\u0105zania"
+                  <StatCard icon='📋' label="Zobowiązania"
                     value={formatCurrency(group.totalObligationBalance, group.currency)}
                     color="var(--warning)" />
                 </EnhancedCard>
@@ -334,22 +325,22 @@ export default function DashboardPageNew() {
         /* Single Currency - no grouping headers */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '30px' }}>
           <EnhancedCard premium>
-            <StatCard icon={'\uD83D\uDCB0'} label="Saldo Netto"
+            <StatCard icon='💰' label="Saldo Netto"
               value={formatCurrency(currencyGroups[0]?.netBalance ?? 0, currencyGroups[0]?.currency ?? 'PLN')}
               color={(currencyGroups[0]?.netBalance ?? 0) >= 0 ? 'var(--success)' : 'var(--danger)'} />
           </EnhancedCard>
           <EnhancedCard premium>
-            <StatCard icon={'\uD83D\uDCB8'} label="Po\u017Cyczki"
+            <StatCard icon='💸' label="Pożyczki"
               value={formatCurrency(currencyGroups[0]?.totalLoanBalance ?? 0, currencyGroups[0]?.currency ?? 'PLN')}
               color="var(--primary)" />
           </EnhancedCard>
           <EnhancedCard premium>
-            <StatCard icon={'\uD83D\uDCCB'} label="Zobowi\u0105zania"
+            <StatCard icon='📋' label="Zobowiązania"
               value={formatCurrency(currencyGroups[0]?.totalObligationBalance ?? 0, currencyGroups[0]?.currency ?? 'PLN')}
               color="var(--warning)" />
           </EnhancedCard>
           <EnhancedCard premium>
-            <StatCard icon={'\u26A0\uFE0F'} label="Przeterminowane"
+            <StatCard icon='⚠️' label="Przeterminowane"
               value={formatCurrency(stats.totalOverdue, currencyGroups[0]?.currency ?? 'PLN')}
               color="var(--danger)" />
           </EnhancedCard>
@@ -357,16 +348,16 @@ export default function DashboardPageNew() {
       )}
 
       {/* Loans Count Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '30px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '30px' }}>
         <EnhancedCard premium badge={{ label: 'Active', color: 'active' }}>
           <div style={{ padding: '12px 0' }}>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Aktywne Po\u017Cyczki</div>
+            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Aktywne Pożyczki</div>
             <div style={{ fontSize: '28px', fontWeight: '900', color: 'var(--primary)' }}>{stats.activeLoans}</div>
           </div>
         </EnhancedCard>
         <EnhancedCard premium badge={{ label: 'Paid', color: 'paid' }}>
           <div style={{ padding: '12px 0' }}>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Sp\u0142acone Po\u017Cyczki</div>
+            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Spłacone Pożyczki</div>
             <div style={{ fontSize: '28px', fontWeight: '900', color: 'var(--success)' }}>{stats.paidLoans}</div>
           </div>
         </EnhancedCard>
@@ -382,7 +373,7 @@ export default function DashboardPageNew() {
       <EnhancedCard premium style={{ marginBottom: '30px' }}>
         <div>
           <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
-            Wska\u017Anik Zdrowia Finansowego
+            Wskaźnik Zdrowia Finansowego
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <div style={{ flex: 1, height: '10px', background: 'var(--bg5)', borderRadius: '99px', overflow: 'hidden' }}>
@@ -400,9 +391,9 @@ export default function DashboardPageNew() {
             </div>
           </div>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            {healthPercentage > 70 && '\u2705 Dobra sytuacja - wi\u0119kszo\u015B\u0107 po\u017Cyczek p\u0142aconych na czas'}
-            {healthPercentage > 40 && healthPercentage <= 70 && '\u26A0\uFE0F \u015Arednia - zwr\u00F3\u0107 uwag\u0119 na przeterminowane'}
-            {healthPercentage <= 40 && '\uD83D\uDD34 Powa\u017Cna - wiele przeterminowanych po\u017Cyczek'}
+            {healthPercentage > 70 && '✅ Dobra sytuacja — większość pożyczek płaconych na czas'}
+            {healthPercentage > 40 && healthPercentage <= 70 && '⚠️ Średnia — zwróć uwagę na przeterminowane'}
+            {healthPercentage <= 40 && '🔴 Poważna — wiele przeterminowanych pożyczek'}
           </p>
         </div>
       </EnhancedCard>
@@ -411,7 +402,7 @@ export default function DashboardPageNew() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px', marginBottom: '30px' }}>
         <EnhancedCard premium>
           <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '16px' }}>
-            {isMultiCurrency ? '\uD83D\uDCCA Rozk\u0142ad wg Walut' : '\uD83D\uDCCA Rozk\u0142ad Po\u017Cyczek'}
+            📊 {isMultiCurrency ? 'Rozkład wg Walut' : 'Rozkład Pożyczek'}
           </h2>
           {isMultiCurrency && currencyDonutData ? (
             currencyDonutData.length === 0 ? (
@@ -458,7 +449,7 @@ export default function DashboardPageNew() {
         </EnhancedCard>
 
         <EnhancedCard premium>
-          <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '16px' }}>{'\uD83C\uDFC6'} Top 5 Po\u017Cyczek</h2>
+          <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '16px' }}>🏆 Top 5 Pożyczek</h2>
           {barData.length === 0 ? (
             <p style={{ color: 'var(--text-muted)', fontSize: '14px', textAlign: 'center', padding: '20px' }}>Brak danych</p>
           ) : (
@@ -499,30 +490,30 @@ export default function DashboardPageNew() {
         const primaryCurrency = currencyGroups[0]?.currency ?? 'PLN';
         return (
           <EnhancedCard premium style={{ marginBottom: '16px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '16px' }}>{'\uD83D\uDCC5'} Ten Miesi\u0105c</h2>
+            <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '16px' }}>📅 Ten Miesiąc</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '8px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Sp\u0142acono w {now.toLocaleDateString('pl-PL', { month: 'long' })}
+                  Spłacono w {now.toLocaleDateString('pl-PL', { month: 'long' })}
                 </div>
                 <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--success)' }}>
                   {formatCurrency(thisTotal, primaryCurrency)}
                 </div>
                 {trend !== 0 && (
                   <div style={{ fontSize: '11px', marginTop: '4px', color: trend > 0 ? 'var(--success)' : 'var(--danger)', fontWeight: '600' }}>
-                    {trend > 0 ? '\u2191' : '\u2193'} {Math.abs(trend)}% vs poprzedni miesi\u0105c
+                    {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% vs poprzedni miesiąc
                   </div>
                 )}
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '8px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Liczba sp\u0142at
+                  Liczba spłat
                 </div>
                 <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--primary)' }}>
                   {thisMonth.length}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  transakcji w tym miesi\u0105cu
+                  transakcji w tym miesiącu
                 </div>
               </div>
             </div>
@@ -533,7 +524,7 @@ export default function DashboardPageNew() {
       {/* Recent Transactions */}
       <EnhancedCard premium>
         <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {'\uD83D\uDCDD'} Ostatnie Sp\u0142aty
+          📝 Ostatnie Spłaty
         </h2>
         {stats.recentTransactions.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', textAlign: 'center', padding: '20px' }}>Brak ostatnich transakcji</p>
@@ -557,7 +548,7 @@ export default function DashboardPageNew() {
                     </div>
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: '700', textAlign: 'right' }}>
-                    <div>{'\u2705'} Sp\u0142acona</div>
+                    <div>✅ Spłacona</div>
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{tx.borrowerName}</div>
                   </div>
                 </div>

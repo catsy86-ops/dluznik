@@ -6,7 +6,7 @@ import { useNotificationPolling } from '../hooks/useNotificationPolling';
 import type { NotificationItem } from '../types/dashboard-ux';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
+  { to: '/', label: 'Przegląd', icon: '📊' },
   { to: '/loans', label: 'Pożyczki', icon: '💸' },
   { to: '/obligations', label: 'Zobowiązania', icon: '📋' },
   { to: '/profile', label: 'Profil', icon: '👤' },
