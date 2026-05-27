@@ -27,7 +27,7 @@ export function useVoiceInput({
 
   useEffect(() => {
     // Check browser support
-    const SpeechRecognition = window.webkitSpeechRecognition || (window as any).SpeechRecognition;
+    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     
     if (!SpeechRecognition) {
       setIsSupported(false);

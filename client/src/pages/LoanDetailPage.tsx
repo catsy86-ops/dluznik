@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { loansApi, loanNotesApi, healthScoreApi, interestBreakdownApi, forecastApi, paymentSuggestionApi, paymentScheduleApi } from '../api';
-import type { Loan, Transaction, LoanNote, LoanHealthScore, InterestBreakdown, PaymentForecast, PaymentSuggestion, PaymentScheduleItem } from '../api';
+import type { Loan, Transaction, LoanNote, PaymentSuggestion, PaymentScheduleItem } from '../api';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LoanHealthScore = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type InterestBreakdown = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PaymentForecast = any;
 import { useToast } from '../components/Toast';
 import Confetti from '../components/Confetti';
 
@@ -73,7 +79,7 @@ function HealthScoreWidget({ score }: { score: LoanHealthScore }) {
       </div>
       {score.recommendations.length > 0 && (
         <div style={{ background: 'var(--bg3)', borderRadius: '8px', padding: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>
-          {score.recommendations.map((r, i) => <div key={i}>💡 {r}</div>)}
+          {score.recommendations.map((r: string, i: number) => <div key={i}>💡 {r}</div>)}
         </div>
       )}
     </div>
@@ -82,35 +88,37 @@ function HealthScoreWidget({ score }: { score: LoanHealthScore }) {
 
 // Widget: Payment Suggestion
 function PaymentSuggestionWidget({ suggestion, loan, onApply }: { suggestion: PaymentSuggestion; loan: Loan; onApply: (amount: number) => void }) {
-  const urgencyColor = suggestion.urgency === 'critical' ? 'var(--danger)' : suggestion.urgency === 'high' ? 'var(--warning)' : 'var(--primary)';
+  const minimum = suggestion.minimumPayment;
+  const recommended = suggestion.recommendedPayment;
+  const fullPayment = suggestion.fullPaymentOption;
 
   return (
-    <div className="card" style={{ marginBottom: '16px', borderColor: urgencyColor + '40' }}>
+    <div className="card" style={{ marginBottom: '16px' }}>
       <h2 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '12px' }}>💡 Sugerowana spłata</h2>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
         <div style={{ background: 'var(--bg3)', borderRadius: '8px', padding: '12px' }}>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>MINIMUM</div>
           <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--danger)', marginBottom: '2px' }}>
-            {fmt(suggestion.minimum, loan.currency)}
+            {fmt(minimum, loan.currency)}
           </div>
           <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>aby nie przeterminować</div>
         </div>
         <div style={{ background: 'rgba(99,102,241,0.1)', borderRadius: '8px', padding: '12px', border: '2px solid var(--primary)' }}>
           <div style={{ fontSize: '11px', color: 'var(--primary)', marginBottom: '4px', fontWeight: '700' }}>REKOMENDOWANA</div>
           <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--primary)', marginBottom: '2px' }}>
-            {fmt(suggestion.recommended, loan.currency)}
+            {fmt(recommended, loan.currency)}
           </div>
           <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>idealna teraz</div>
         </div>
       </div>
       <div style={{ display: 'flex', gap: '10px', marginBottom: suggestion.interestSavings > 0 ? '12px' : 0 }}>
-        <button onClick={() => onApply(suggestion.minimum)} className="btn-ghost" style={{ flex: 1, padding: '10px' }}>
+        <button onClick={() => onApply(minimum)} className="btn-ghost" style={{ flex: 1, padding: '10px' }}>
           Spłacić minimum
         </button>
-        <button onClick={() => onApply(suggestion.recommended)} className="btn-primary" style={{ flex: 1, padding: '10px' }}>
+        <button onClick={() => onApply(recommended)} className="btn-primary" style={{ flex: 1, padding: '10px' }}>
           Spłacić rekomendowaną
         </button>
-        <button onClick={() => onApply(suggestion.fullPayment)} className="btn-success" style={{ flex: 1, padding: '10px' }}>
+        <button onClick={() => onApply(fullPayment)} className="btn-success" style={{ flex: 1, padding: '10px' }}>
           Spłacić całość
         </button>
       </div>

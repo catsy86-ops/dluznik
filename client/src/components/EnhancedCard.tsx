@@ -8,13 +8,14 @@
 interface EnhancedCardProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   onClick?: () => void;
   glassEffect?: boolean;
   premium?: boolean;
   animated?: boolean;
   badge?: {
     label: string;
-    color: 'success' | 'danger' | 'active';
+    color: 'success' | 'danger' | 'active' | 'paid' | 'overdue';
   };
   delay?: number;
 }
@@ -22,6 +23,7 @@ interface EnhancedCardProps {
 export default function EnhancedCard({
   children,
   className = '',
+  style,
   onClick,
   glassEffect = false,
   premium = false,
@@ -40,6 +42,7 @@ export default function EnhancedCard({
         animationDelay: `${delay}ms`,
         cursor: onClick ? 'pointer' : 'default',
         position: 'relative',
+        ...style,
       }}
     >
       {badge && (

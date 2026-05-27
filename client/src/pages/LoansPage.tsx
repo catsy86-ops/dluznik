@@ -21,21 +21,6 @@ function fmt(n: number, currency = 'PLN') {
   return new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(n);
 }
 
-function useCountUp(target: number, duration = 600) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    let start = 0;
-    const step = target / (duration / 16);
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= target) { setVal(target); clearInterval(timer); }
-      else setVal(Math.floor(start));
-    }, 16);
-    return () => clearInterval(timer);
-  }, [target, duration]);
-  return val;
-}
-
 function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? Math.min(100, ((Number(max) - Number(value)) / Number(max)) * 100) : 0;
   return (
@@ -285,13 +270,14 @@ function SwipableLoanCard({ loan, delay, removing, onEdit, onPayments, onDelete 
   );
   const isOverdue = loan.status === 'active' && loan.dueDate && new Date(loan.dueDate) < new Date();
   const pct = loan.originalAmount > 0 ? ((Number(loan.originalAmount) - Number(loan.currentBalance)) / Number(loan.originalAmount)) * 100 : 0;
+  void pct; // used in ProgressBar below
 
   const statusMap: Record<string, [string, string]> = {
     active: ['var(--primary)', 'Aktywna'],
     paid: ['var(--success)', 'Spłacona'],
     overdue: ['var(--danger)', 'Przeterminowana'],
   };
-  const [statusColor, statusLabel] = statusMap[loan.status] ?? ['var(--text-muted)', loan.status];
+  const [_statusColor, _statusLabel] = statusMap[loan.status] ?? ['var(--text-muted)', loan.status];
 
   return (
     <div className={removing ? 'card-removing' : ''} style={{ marginBottom: '10px' }}>

@@ -14,7 +14,7 @@ type Section = 'account' | 'appearance' | 'notifications' | 'data' | 'security';
 export default function ProfilePage() {
   const { user, logout, isGuest } = useAuth();
   const { toast } = useToast();
-  const { theme, setTheme, isDark } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [section, setSection] = useState<Section>('account');
 
   // Account

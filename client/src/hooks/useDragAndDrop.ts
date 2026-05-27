@@ -13,7 +13,7 @@ interface UseDragAndDropOptions<T> {
   getKey: (item: T) => string;
 }
 
-export function useDragAndDrop<T>({ items, onReorder, getKey }: UseDragAndDropOptions<T>) {
+export function useDragAndDrop<T>({ items, onReorder, getKey: _getKey }: UseDragAndDropOptions<T>) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const dragItem = useRef<number | null>(null);

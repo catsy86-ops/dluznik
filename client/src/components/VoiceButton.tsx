@@ -20,7 +20,7 @@ export default function VoiceButton({
   label = '🎤 Voice',
   className = '',
   language = 'pl-PL',
-  placeholder = 'Listening...',
+  placeholder: _placeholder = 'Listening...',
 }: VoiceButtonProps) {
   const { isListening, transcript, startListening, stopListening, isSupported } =
     useVoiceInput({

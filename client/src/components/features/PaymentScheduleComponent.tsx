@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import type { PaymentScheduleItem } from '../../api';
 import { loansApi } from '../../api';

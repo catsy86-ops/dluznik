@@ -115,8 +115,9 @@ export default function Layout() {
                 ? '0 2px 8px rgba(107,122,153,0.3)'
                 : '0 2px 8px rgba(99,102,241,0.3)',
               transition: 'transform 0.2s',
-              title: isGuest ? 'Tryb gościa' : user?.email,
-            }}>
+            }}
+            title={isGuest ? 'Tryb gościa' : user?.email}
+            >
               {isGuest ? '👁️' : (user?.email?.[0]?.toUpperCase() ?? 'U')}
             </div>
           </NavLink>

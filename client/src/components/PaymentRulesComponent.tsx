@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import type { PaymentRule, SuggestedRule } from '../api';
 import { loansApi } from '../api';

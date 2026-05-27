@@ -10,7 +10,7 @@ interface PaymentScheduleComponentProps {
 
 export default function PaymentScheduleComponent({
   loanId,
-  borrowerName,
+  borrowerName: _borrowerName,
   months = 12,
 }: PaymentScheduleComponentProps) {
   const [schedule, setSchedule] = useState<PaymentScheduleItem[]>([]);

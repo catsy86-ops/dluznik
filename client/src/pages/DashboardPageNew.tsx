@@ -13,7 +13,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loansApi, obligationsApi } from '../api';
 import type { Loan, Obligation, Transaction } from '../api';
-import { AnimatedNumber, StatCard, EnhancedCard } from '../components';
+import { StatCard, EnhancedCard } from '../components';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../AuthContext';
 import GuestBanner from '../components/GuestBanner';
@@ -255,22 +255,24 @@ export default function DashboardPageNew() {
     }));
 
   // DonutChart data: per-currency breakdown when multiple currencies
-  const currencyDonutData = isMultiCurrency
-    ? currencyGroups.map((group, index) => ({
-        name: `${group.currency} - Po\u017Cyczki`,
-        value: group.totalLoanBalance,
-        color: CHART_COLORS[index % CHART_COLORS.length],
-        currency: group.currency,
-        type: 'loans' as const,
-      })).concat(
-        currencyGroups.map((group, index) => ({
-          name: `${group.currency} - Zobowi\u0105zania`,
+  type DonutEntry = { name: string; value: number; color: string; currency: string; type: 'loans' | 'obligations' };
+  const currencyDonutData: DonutEntry[] | null = isMultiCurrency
+    ? ([
+        ...currencyGroups.map((group, index) => ({
+          name: `${group.currency} - Pożyczki`,
+          value: group.totalLoanBalance,
+          color: CHART_COLORS[index % CHART_COLORS.length],
+          currency: group.currency,
+          type: 'loans' as const,
+        })),
+        ...currencyGroups.map((group, index) => ({
+          name: `${group.currency} - Zobowiązania`,
           value: group.totalObligationBalance,
           color: CHART_COLORS[(index + currencyGroups.length) % CHART_COLORS.length],
           currency: group.currency,
           type: 'obligations' as const,
-        }))
-      ).filter(d => d.value > 0)
+        })),
+      ] as DonutEntry[]).filter(d => d.value > 0)
     : null;
 
   return (
@@ -416,9 +418,9 @@ export default function DashboardPageNew() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number, name: string) => {
-                      const item = currencyDonutData.find(d => d.name === name);
-                      return [item ? formatCurrency(value, item.currency) : value, name];
+                    formatter={(value: any, name: any) => {
+                      const item = currencyDonutData!.find(d => d.name === name);
+                      return [item ? formatCurrency(Number(value), item.currency) : value, name];
                     }}
                     contentStyle={{ background: '#0d1117', border: '1px solid #2a3450', borderRadius: '8px', fontSize: '12px', color: '#e2e8f5' }}
                   />
@@ -438,7 +440,7 @@ export default function DashboardPageNew() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [value, 'Liczba']}
+                    formatter={(value: any) => [value, 'Liczba']}
                     contentStyle={{ background: '#0d1117', border: '1px solid #2a3450', borderRadius: '8px', fontSize: '12px', color: '#e2e8f5' }}
                   />
                   <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '12px', color: '#6b7a99' }} />
@@ -459,9 +461,9 @@ export default function DashboardPageNew() {
                 <YAxis tick={{ fontSize: 10, fill: '#6b7a99' }} axisLine={false} tickLine={false}
                   tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip
-                  formatter={(value: number, _name: string, props: any) => {
+                  formatter={(value: any, _name: any, props: any) => {
                     const currency = props?.payload?.currency ?? 'PLN';
-                    return [formatCurrency(value, currency), 'Saldo'];
+                    return [formatCurrency(Number(value), currency), 'Saldo'];
                   }}
                   contentStyle={{ background: '#0d1117', border: '1px solid #2a3450', borderRadius: '8px', fontSize: '12px', color: '#e2e8f5' }}
                 />
